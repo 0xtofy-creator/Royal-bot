@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+.idea/
+.vscode/
+config.py
+
+# Логи
+*.log
+
+# Если захочешь – можешь сюда добавить config.py,
+# но тогда нужно будет держать локальный config.py вне гита.
