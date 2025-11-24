@@ -2,130 +2,87 @@ import json
 import os
 from datetime import datetime
 
-from config import (
-    ADMIN_CHAT_ID,
-    ADMIN_USERS_THREAD_ID,
-    ADMIN_LEADS_THREAD_ID,
-    ADMIN_EVENTS_THREAD_ID,
-    ADMIN_ERRORS_THREAD_ID,
-)
+# Пути к JSON-файлам
+BASE_DIR = "/root/Royal-bot/data"
+USERS_FILE = f"{BASE_DIR}/users.json"
+LEADS_FILE = f"{BASE_DIR}/leads.json"
+EVENTS_FILE = f"{BASE_DIR}/events.json"
 
-DATA_DIR = "data"
-os.makedirs(DATA_DIR, exist_ok=True)
+# Убедимся, что директория существует
+os.makedirs(BASE_DIR, exist_ok=True)
 
 
-def _write_json_line(filename: str, data: dict):
-    path = os.path.join(DATA_DIR, filename)
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(data, ensure_ascii=False) + "\n")
+# ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 
-
-async def log_general_event(bot, text: str):
-    try:
-        await bot.send_message(
-            chat_id=ADMIN_CHAT_ID,
-            text=text,
-        )
-    except Exception as e:
-        print("[WARN] log_general_event error:", e)
-
-
-async def log_error(bot, where: str, error: Exception | str):
-    now = datetime.now()
-    data = {
-        "timestamp": now.isoformat(),
-        "where": where,
-        "error": str(error),
-    }
-    _write_json_line("errors.json", data)
-
-    msg = (
-        "❗ Ошибка в боте\n\n"
-        f"Где: {where}\n"
-        f"Ошибка: {str(error)}\n"
-        f"Время: {now.strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-
-    try:
-        await bot.send_message(
-            chat_id=ADMIN_CHAT_ID,
-            message_thread_id=ADMIN_ERRORS_THREAD_ID,
-            text=msg
-        )
-    except Exception as e:
-        print("[WARN] log_error send:", e)
-
-
-async def log_user(bot, user_id: int, username: str, ref: str):
-    now = datetime.now()
-    data = {
-        "timestamp": now.isoformat(),
-        "event": "new_user",
-        "user_id": user_id,
-        "username": username,
-        "ref": ref or "",
-    }
-    _write_json_line("users.json", data)
-
-    text = (
-        "👤 Новый пользователь\n\n"
-        f"Пользователь: {username}\n"
-        f"ID: {user_id}\n"
-        f"Источник: {ref if ref else '—'}\n"
-        f"Время: {now.strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-
-    try:
-        await bot.send_message(
-            chat_id=ADMIN_CHAT_ID,
-            message_thread_id=ADMIN_USERS_THREAD_ID,
-            text=text,
-        )
-    except Exception as e:
-        print("[WARN] log_user send error:", e)
-
-
-def _load_json_lines(filename: str):
-    path = os.path.join(DATA_DIR, filename)
+def load_json(path):
     if not os.path.exists(path):
-        return []
-    with open(path, "r", encoding="utf-8") as f:
-        return [json.loads(x) for x in f if x.strip()]
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {}
 
 
-def _get_next_lead_id():
-    items = _load_json_lines("leads.json")
-    if not items:
-        return 1
-    return max(i.get("lead_id", 0) for i in items) + 1
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
 
-async def log_lead(bot, user_id: int, username: str, teamlead: str, ref="") -> int:
-    now = datetime.now()
-    lead_id = _get_next_lead_id()
+# ---------- ЛОГИ ПОЛЬЗОВАТЕЛЕЙ ----------
 
-    item = {
-        "timestamp": now.isoformat(),
-        "event": "lead_new",
-        "lead_id": lead_id,
+def log_user_start(user_id, username):
+    data = load_json(USERS_FILE)
+    data[str(user_id)] = {
+        "username": username,
+        "first_seen": datetime.now().isoformat()
+    }
+    save_json(USERS_FILE, data)
+
+
+def get_users():
+    """Возвращает всех пользователей."""
+    return load_json(USERS_FILE)
+
+
+# ---------- ЛОГИ ЛИДОВ ----------
+
+def log_lead_created(user_id, username, teamlead):
+    data = load_json(LEADS_FILE)
+    lead_id = str(len(data) + 1)
+
+    data[lead_id] = {
         "user_id": user_id,
         "username": username,
-        "assigned_teamlead": teamlead,
-        "ref": ref,
-        "status": "new",
+        "teamlead": teamlead,
+        "status": "NEW",
+        "timestamp": datetime.now().isoformat()
     }
-    _write_json_line("leads.json", item)
+
+    save_json(LEADS_FILE, data)
     return lead_id
 
 
-async def log_lead_status(bot, lead_id: int, username: str, status: str):
-    now = datetime.now()
+def set_lead_status(lead_id, status):
+    data = load_json(LEADS_FILE)
+    if lead_id in data:
+        data[lead_id]["status"] = status
+        data[lead_id]["updated"] = datetime.now().isoformat()
+        save_json(LEADS_FILE, data)
 
-    item = {
-        "timestamp": now.isoformat(),
-        "event": "lead_status",
-        "lead_id": lead_id,
-        "username": username,
-        "status": status,
-    }
-    _write_json_line("leads.json", item)
+
+def get_leads():
+    """Возвращает все лиды."""
+    return load_json(LEADS_FILE)
+
+
+# ---------- ЛОГИ СОБЫТИЙ ----------
+
+def log_general_event(bot, text):
+    """Отправляет событие в General-тред."""
+    from config import GENERAL_CHAT_ID, EVENTS_THREAD_ID
+    return bot.send_message(
+        chat_id=GENERAL_CHAT_ID,
+        message_thread_id=EVENTS_THREAD_ID,
+        text=text
+    )

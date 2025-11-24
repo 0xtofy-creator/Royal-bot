@@ -1,35 +1,30 @@
+# handlers/start.py
+
 from aiogram import Router
-from aiogram.types import Message
 from aiogram.filters import CommandStart
-from aiogram.exceptions import TelegramForbiddenError
+from aiogram.types import Message
 
 from keyboards.main_menu import main_menu
 from utils.texts import START_TEXT
-from utils.logger import log_user
+from utils.logger import log_user_start
 
 router = Router()
 
 
 @router.message(CommandStart())
-async def start(message: Message):
+async def cmd_start(message: Message):
     user = message.from_user
 
-    # Логируем пользователя только в ЛС
-    if message.chat.type == "private":
-        username = f"@{user.username}" if user.username else f"id:{user.id}"
-        ref = message.text.replace("/start", "").strip()
+    # /start или /start source
+    source = None
+    parts = message.text.split(maxsplit=1)
+    if len(parts) > 1:
+        source = parts[1]
 
-        await log_user(
-            bot=message.bot,
-            user_id=user.id,
-            username=username,
-            ref=ref
-        )
+    log_user_start(
+        user_id=user.id,
+        username=user.username,
+        source=source,
+    )
 
-    try:
-        await message.answer(
-            START_TEXT,
-            reply_markup=main_menu()
-        )
-    except TelegramForbiddenError:
-        return
+    await message.answer(START_TEXT, reply_markup=main_menu())
