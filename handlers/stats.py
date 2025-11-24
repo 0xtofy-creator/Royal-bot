@@ -1,38 +1,30 @@
-# handlers/stats.py
-
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from utils.logger import get_users, get_leads
+from utils.logger import get_ad_stats
 
 router = Router()
 
 
-@router.message(Command("stats"))
-async def cmd_stats(message: Message):
+@router.message(Command("adstats"))
+async def adstats(message: Message):
     """
-    Простейшая статистика по пользователям и лидам.
-    Команда: /stats
+    Показывает статистику по источникам трафика.
     """
+    stats = get_ad_stats()
 
-    users = get_users()      # словарь {user_id: {...}}
-    leads = get_leads()      # словарь {lead_id: {...}}
+    if not stats:
+        await message.answer("Пока никто не приходил по рекламе.")
+        return
 
-    total_users = len(users)
-    total_leads = len(leads)
+    text = "📊 <b>Статистика по источникам трафика:</b>\n\n"
+    total = 0
 
-    success_leads = sum(1 for l in leads.values() if l.get("status") == "SUCCESS")
-    in_progress_leads = sum(1 for l in leads.values() if l.get("status") == "IN_PROGRESS")
-    failed_leads = sum(1 for l in leads.values() if l.get("status") == "FAILED")
+    for source, count in stats.items():
+        text += f"• <code>{source}</code> — <b>{count}</b>\n"
+        total += count
 
-    text = (
-        "📊 <b>Статистика бота</b>\n\n"
-        f"👥 Пользователей: <b>{total_users}</b>\n"
-        f"📨 Всего лидов: <b>{total_leads}</b>\n\n"
-        f"🟢 Успешных: <b>{success_leads}</b>\n"
-        f"🟡 В работе: <b>{in_progress_leads}</b>\n"
-        f"🔴 Неуспех: <b>{failed_leads}</b>"
-    )
+    text += f"\n🧮 <b>Всего:</b> {total}"
 
-    await message.answer(text, parse_mode="HTML")
+    await message.answer(text)

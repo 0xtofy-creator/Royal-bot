@@ -1,23 +1,38 @@
-{"timestamp": "2025-11-21T23:14:01.467139", "event": "lead_new", "lead_id": 1, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "Royal_Trader_Support_1", "ref": "", "status": "new"}
-{"timestamp": "2025-11-21T23:14:08.200940", "event": "lead_new", "lead_id": 2, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "Royal_Trader_Support_1", "ref": "", "status": "new"}
-{"timestamp": "2025-11-21T23:15:00.544448", "event": "lead_new", "lead_id": 3, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "Royal_Trader_Support_4", "ref": "", "status": "new"}
-{"timestamp": "2025-11-21T23:15:33.368209", "event": "lead_status", "lead_id": 1, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "status": "taken"}
-{"timestamp": "2025-11-21T23:15:37.051892", "event": "lead_status", "lead_id": 1, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "status": "processing"}
-{"timestamp": "2025-11-21T23:15:56.364520", "event": "lead_status", "lead_id": 1, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "status": "success"}
-{"timestamp": "2025-11-24T17:08:32.994950", "event": "lead_new", "lead_id": 4, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "Royal_Trader_Support_3", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T17:09:34.206277", "event": "lead_new", "lead_id": 5, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "Royal_Trader_Support_2", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T17:11:57.066912", "event": "lead_new", "lead_id": 6, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "Royal_Trader_Support_4", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T17:19:51.077007", "event": "lead_new", "lead_id": 7, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "@Royal_Trader_Support_3", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T17:51:20.817796", "event": "lead_new", "lead_id": 8, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "@Royal_Trader_Support_2", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T17:55:57.141643", "event": "lead_new", "lead_id": 9, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "@Royal_Trader_Support_1", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T17:56:36.010151", "event": "lead_new", "lead_id": 10, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "@Royal_Trader_Support_4", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T18:07:37.840239", "event": "lead_new", "lead_id": 11, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "@Royal_Trader_Support_3", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T18:07:51.769911", "event": "lead_new", "lead_id": 12, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "@Royal_Trader_Support_4", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T18:08:27.807957", "event": "lead_new", "lead_id": 13, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "@Royal_Trader_Support_4", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T18:11:34.885044", "event": "lead_new", "lead_id": 14, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "assigned_teamlead": "@Royal_Trader_Support_3", "ref": "", "status": "new"}
-{"timestamp": "2025-11-24T19:09:24.616414", "event": "lead_created", "lead_id": 15, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "teamlead": "@Royal_Trader_Support_3", "source": "menu_connect"}
-{"timestamp": "2025-11-24T19:25:38.510298", "event": "lead_created", "lead_id": 16, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "teamlead": "@Royal_Trader_Support_2", "source": "menu_connect"}
-{"timestamp": "2025-11-24T19:30:29.625866", "event": "lead_created", "lead_id": 17, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "teamlead": "@Royal_Trader_Support_3", "source": "menu_connect"}
-{"timestamp": "2025-11-24T19:30:40.878187", "event": "lead_created", "lead_id": 18, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "teamlead": "@Royal_Trader_Support_1", "source": "menu_connect"}
-{"timestamp": "2025-11-24T19:43:49.432023", "event": "lead_created", "lead_id": 19, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "teamlead": "@Royal_Trader_Support_2", "source": null}
-{"timestamp": "2025-11-24T19:44:13.382723", "event": "lead_created", "lead_id": 20, "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "teamlead": "@Royal_Trader_Support_3", "source": null}
+{
+    "1": {
+        "user_id": 7585804566,
+        "username": "Royal_Trader_Support_1",
+        "teamlead": "@Royal_Trader_Support_4",
+        "source": "menu_connect",
+        "status": "SUCCESS",
+        "timestamp": "2025-11-24T22:09:18.980709",
+        "updated": "2025-11-24T22:09:45.585355"
+    },
+    "2": {
+        "user_id": 1089668115,
+        "username": "im_Tofy",
+        "teamlead": "@Royal_Trader_Support_4",
+        "source": "menu_connect",
+        "status": "SUCCESS",
+        "timestamp": "2025-11-24T22:20:11.808993",
+        "updated": "2025-11-24 22:48:54"
+    },
+    "3": {
+        "user_id": 1089668115,
+        "username": "im_Tofy",
+        "teamlead": "@Royal_Trader_Support_4",
+        "source": null,
+        "status": "FAILED",
+        "timestamp": "2025-11-24 22:47:48",
+        "updated": "2025-11-24 22:48:51"
+    },
+    "4": {
+        "user_id": 7163296075,
+        "username": "ggerrgggg",
+        "teamlead": "@Royal_Trader_Support_1",
+        "source": "RF",
+        "status": "FAILED",
+        "timestamp": "2025-11-24 22:48:20",
+        "updated": "2025-11-24 22:48:49"
+    }
+}

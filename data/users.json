@@ -1,10 +1,17 @@
-{"timestamp": "2025-11-21T23:10:56.624367", "event": "new_user", "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "ref": ""}
-{"timestamp": "2025-11-21T23:13:38.619199", "event": "new_user", "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "ref": ""}
-{"timestamp": "2025-11-24T17:19:47.713723", "event": "new_user", "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "ref": ""}
-{"timestamp": "2025-11-24T17:51:19.196152", "event": "new_user", "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "ref": ""}
-{"timestamp": "2025-11-24T17:55:51.674141", "event": "new_user", "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "ref": ""}
-{"timestamp": "2025-11-24T18:07:36.792177", "event": "new_user", "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "ref": ""}
-{"timestamp": "2025-11-24T18:08:26.069866", "event": "new_user", "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "ref": ""}
-{"timestamp": "2025-11-24T18:11:33.746347", "event": "new_user", "user_id": 7585804566, "username": "@Royal_Trader_Support_1", "ref": ""}
-{"timestamp": "2025-11-24T19:09:22.242108", "event": "user_start", "user_id": 7585804566, "username": "Royal_Trader_Support_1", "source": null}
-{"timestamp": "2025-11-24T19:44:12.395638", "event": "user_start", "user_id": 7585804566, "username": "Royal_Trader_Support_1", "source": null}
+{
+    "7585804566": {
+        "username": "Royal_Trader_Support_1",
+        "source": null,
+        "first_seen": "2025-11-24T22:09:15.938415"
+    },
+    "1089668115": {
+        "username": "im_Tofy",
+        "source": null,
+        "first_seen": "2025-11-24T22:20:10.275979"
+    },
+    "7163296075": {
+        "username": "@ggerrgggg",
+        "source": "RF",
+        "first_seen": "2025-11-24 22:48:17"
+    }
+}

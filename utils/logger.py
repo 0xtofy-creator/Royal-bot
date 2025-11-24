@@ -2,26 +2,18 @@ import json
 import os
 from datetime import datetime
 
-# Пути к JSON-файлам
-BASE_DIR = "/root/Royal-bot/data"
-USERS_FILE = f"{BASE_DIR}/users.json"
-LEADS_FILE = f"{BASE_DIR}/leads.json"
-EVENTS_FILE = f"{BASE_DIR}/events.json"
-
-# Убедимся, что директория существует
-os.makedirs(BASE_DIR, exist_ok=True)
+USERS_FILE = "data/users.json"
+LEADS_FILE = "data/leads.json"
+EVENTS_FILE = "data/events.json"
 
 
-# ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+# ---------- JSON helpers ----------
 
 def load_json(path):
     if not os.path.exists(path):
         return {}
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
-        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 def save_json(path, data):
@@ -29,60 +21,88 @@ def save_json(path, data):
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 
-# ---------- ЛОГИ ПОЛЬЗОВАТЕЛЕЙ ----------
+# ---------- USER TRACKING ----------
 
-def log_user_start(user_id, username):
-    data = load_json(USERS_FILE)
-    data[str(user_id)] = {
-        "username": username,
-        "first_seen": datetime.now().isoformat()
-    }
-    save_json(USERS_FILE, data)
+async def save_user_source(user_id, username, source):
+    """
+    Сохраняет источник трафика пользователя.
+    """
+    users = load_json(USERS_FILE)
+    user_id = str(user_id)
+
+    if user_id not in users:  # Новый пользователь
+        users[user_id] = {
+            "username": f"@{username}" if username else None,
+            "source": source,
+            "first_seen": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+    save_json(USERS_FILE, users)
 
 
-def get_users():
-    """Возвращает всех пользователей."""
-    return load_json(USERS_FILE)
+def get_ad_stats():
+    """
+    Возвращает статистику по источникам трафика.
+    """
+    users = load_json(USERS_FILE)
+
+    result = {}
+    for u in users.values():
+        src = u.get("source", "unknown")
+        result[src] = result.get(src, 0) + 1
+
+    return result
 
 
-# ---------- ЛОГИ ЛИДОВ ----------
+# ---------- LEAD LOGS ----------
 
-def log_lead_created(user_id, username, teamlead):
-    data = load_json(LEADS_FILE)
-    lead_id = str(len(data) + 1)
+def log_lead_created(user_id: int, username: str | None, teamlead: str, source: str | None = None) -> str:
+    """
+    Создаёт запись о новом лиде.
+    """
+    leads = load_json(LEADS_FILE)
+    lead_id = str(len(leads) + 1)
 
-    data[lead_id] = {
+    leads[lead_id] = {
         "user_id": user_id,
         "username": username,
         "teamlead": teamlead,
+        "source": source,
         "status": "NEW",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-
-    save_json(LEADS_FILE, data)
+    save_json(LEADS_FILE, leads)
     return lead_id
 
 
-def set_lead_status(lead_id, status):
-    data = load_json(LEADS_FILE)
-    if lead_id in data:
-        data[lead_id]["status"] = status
-        data[lead_id]["updated"] = datetime.now().isoformat()
-        save_json(LEADS_FILE, data)
+def set_lead_status(lead_id: str, status: str):
+    """
+    Обновляет статус лида.
+    """
+    leads = load_json(LEADS_FILE)
+
+    if lead_id in leads:
+        leads[lead_id]["status"] = status
+        leads[lead_id]["updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        save_json(LEADS_FILE, leads)
 
 
 def get_leads():
-    """Возвращает все лиды."""
     return load_json(LEADS_FILE)
 
 
-# ---------- ЛОГИ СОБЫТИЙ ----------
+# ---------- GENERIC EVENT LOGS (optional) ----------
 
-def log_general_event(bot, text):
-    """Отправляет событие в General-тред."""
-    from config import GENERAL_CHAT_ID, EVENTS_THREAD_ID
-    return bot.send_message(
-        chat_id=GENERAL_CHAT_ID,
-        message_thread_id=EVENTS_THREAD_ID,
-        text=text
-    )
+def log_event(event_type: str, data: dict):
+    """
+    Логирует произвольные события бота.
+    """
+    events = load_json(EVENTS_FILE)
+
+    events[str(len(events) + 1)] = {
+        "event": event_type,
+        "data": data,
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    save_json(EVENTS_FILE, events)
