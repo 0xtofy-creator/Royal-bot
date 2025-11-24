@@ -1,102 +1,139 @@
+from aiogram import Router, F
+from aiogram.types import CallbackQuery
+from urllib.parse import quote
 import random
-from aiogram import Router
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from keyboards.main_menu import main_menu
-from keyboards.back_menu import back_menu
-from utils.texts import (
-    JOIN_TEMPLATE,
-    MANUALS_TEXT,
-    MENTORS_TEXT,
-    REPRESENTATIVES_TEXT
-)
+from utils.logger import log_lead
+from handlers.leads import send_lead_card
 
 router = Router()
 
-SUPPORT_ACCOUNTS = [
+TL_LIST = [
     "Royal_Trader_Support_1",
     "Royal_Trader_Support_2",
     "Royal_Trader_Support_3",
-    "Royal_Trader_Support_4"
+    "Royal_Trader_Support_4",
 ]
 
-# --- Главное меню ---
-@router.callback_query(lambda c: c.data == "main_menu")
-async def cb_main_menu(callback: CallbackQuery):
+
+# 🔹 1. Подключиться на площадку
+@router.callback_query(F.data == "connect")
+async def connect(callback: CallbackQuery):
+    user = callback.from_user
+
+    assigned_tl = random.choice(TL_LIST)
+
+    # текст для тимлида
+    text = "Привет! Хочу подключиться к площадке Royal Finance."
+    deep_link = f"https://t.me/{assigned_tl}?text={quote(text)}"
+
+    # лог лидов (в тред)
+    lead_id = await log_lead(
+        bot=callback.bot,
+        user_id=user.id,
+        username=f"@{user.username}" if user.username else f"id:{user.id}",
+        teamlead=f"@{assigned_tl}",
+    )
+
+    await send_lead_card(
+        bot=callback.bot,
+        lead_id=lead_id,
+        user_id=user.id,
+        username=f"@{user.username}" if user.username else f"id:{user.id}",
+        teamlead=f"@{assigned_tl}",
+    )
+
+    # обновление главного меню (edit_message)
     await callback.message.edit_text(
-        "Выбери нужный раздел ниже 👇",
+        f"🚀 Для подключения нажмите:\n\n👉 [Открыть чат с тимлидом](<{deep_link}>)",
+        parse_mode="Markdown",
         reply_markup=main_menu()
     )
 
+    await callback.answer()
 
-# --- Назад ---
-@router.callback_query(lambda c: c.data == "back")
-async def cb_back(callback: CallbackQuery):
+
+# 🔹 2. Актуальный оффер
+@router.callback_query(F.data == "offer")
+async def offer(callback: CallbackQuery):
+    text = (
+        "🔥 *Актуальный оффер Royal Finance:*\n\n"
+        "*Россия:*\n"
+        "• 100–999₽ → *13%*\n"
+        "• 1 000–4 999₽ → *9%*\n"
+        "• 5 000–9 999₽ → *7.5%*\n"
+        "• 10 000₽+ → *6.5%*\n\n"
+        "*Азербайджан:*\n"
+        "• Приём — *4%*\n"
+        "• Вывод — *1%*\n"
+        "• Оптимальные суммы: *5 000–30 000₽*\n\n"
+        "*Узбекистан:*\n"
+        "• Приём — *2%*\n"
+        "• Вывод — *1%*\n"
+        "• Лучший диапазон чеков: *2 000–12 000₽*"
+    )
+
     await callback.message.edit_text(
-        "Выбери нужный раздел ниже 👇",
+        text,
+        parse_mode="Markdown",
         reply_markup=main_menu()
     )
 
+    await callback.answer()
 
-# --- Подключиться на площадку ---
-@router.callback_query(lambda c: c.data == "join")
-async def cb_join(callback: CallbackQuery):
 
-    random_support = random.choice(SUPPORT_ACCOUNTS)
+# 🔹 3. Мануалы
+@router.callback_query(F.data == "manuals")
+async def manuals(callback: CallbackQuery):
 
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="💬 Написать менеджеру",
-            url=f"https://t.me/{random_support}"
-        )],
-        [InlineKeyboardButton(text="🔙 Назад", callback_data="back")],
-        [InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")]
-    ])
-
-    await callback.message.edit_text(
-        JOIN_TEMPLATE.format(
-            username=callback.from_user.username,
-            user_id=callback.from_user.id
-        ),
-        reply_markup=kb
+    text = (
+        "📚 *Актуальные мануалы:*\n\n"
+        "ПСБ\nГазпром\nГазпром армия\nОзон ферма\nОзон озон\n"
+        "Альфа Агроферма\nАльфа «в круг»\nТиньк ферма в круг"
     )
 
-
-# --- Актуальный оффер ---
-@router.callback_query(lambda c: c.data == "offer")
-async def cb_offer(callback: CallbackQuery):
-
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="💬 Открыть чат с ботом",
-            url="https://t.me/royal_servebot"
-        )],
-        [InlineKeyboardButton(text="🔙 Назад", callback_data="back")],
-        [InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")]
-    ])
-
     await callback.message.edit_text(
-        "🔥 Актуальный оффер Royal Finance:\n\n"
-        "— Мобильная коммерция до 16%\n"
-        "— Поток 24/7\n"
-        "— Готовые банки\n",
-        reply_markup=kb
+        text,
+        parse_mode="Markdown",
+        reply_markup=main_menu()
     )
 
-
-# --- Мануалы ---
-@router.callback_query(lambda c: c.data == "manuals")
-async def cb_manuals(callback: CallbackQuery):
-    await callback.message.edit_text(MANUALS_TEXT, reply_markup=back_menu())
+    await callback.answer()
 
 
-# --- Тимлиды ---
-@router.callback_query(lambda c: c.data == "teamleads")
-async def cb_teamleads(callback: CallbackQuery):
-    await callback.message.edit_text(REPRESENTATIVES_TEXT, reply_markup=back_menu())
+# 🔹 4. Тимлиды
+@router.callback_query(F.data == "teamleads")
+async def teamleads(callback: CallbackQuery):
+
+    text = (
+        "👑 *Официальные тимлиды:*\n\n"
+        "@Royal_Trader_Support_1\n"
+        "@Royal_Trader_Support_2\n"
+        "@Royal_Trader_Support_3\n"
+        "@Royal_Trader_Support_4"
+    )
+
+    await callback.message.edit_text(
+        text,
+        parse_mode="Markdown",
+        reply_markup=main_menu()
+    )
+
+    await callback.answer()
 
 
-# --- Менторы ---
-@router.callback_query(lambda c: c.data == "mentors")
-async def cb_mentors(callback: CallbackQuery):
-    await callback.message.edit_text(MENTORS_TEXT, reply_markup=back_menu())
+# 🔹 5. Ментор
+@router.callback_query(F.data == "mentor")
+async def mentor(callback: CallbackQuery):
+
+    deep = quote("Привет! Нужен мануал для работы.")
+    link = f"https://t.me/Royal_mentoringA?text={deep}"
+
+    await callback.message.edit_text(
+        f"🧠 Для получения мануала нажмите:\n👉 [Открыть чат](<{link}>)",
+        parse_mode="Markdown",
+        reply_markup=main_menu()
+    )
+
+    await callback.answer()
