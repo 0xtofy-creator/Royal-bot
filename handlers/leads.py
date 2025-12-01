@@ -1,72 +1,113 @@
-from aiogram import Router
+# handlers/leads.py
+
+from aiogram import Router, F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 from config import LEADS_CHAT_ID, LEADS_THREAD_ID
-from utils.logger import set_lead_status
+from utils.logger import set_lead_taken, set_lead_closed, get_lead
 
 router = Router()
 
 
-async def send_lead_card(bot, lead_id: str, user: str, teamlead: str, source: str):
-    """
-    Отправка карточки нового лида в тред "Лиды (заявки)".
-    """
-
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔵 Взять в работу", callback_data=f"take_{lead_id}")]
+def _kb_take(lead_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔵 Взять в работу", callback_data=f"lead_take:{lead_id}")]
     ])
 
-    await bot.send_message(
+
+def _kb_close(lead_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🟢 Успех", callback_data=f"lead_success:{lead_id}")],
+        [InlineKeyboardButton(text="🔴 Неуспех", callback_data=f"lead_fail:{lead_id}")]
+    ])
+
+
+def _format_lead_text(lead: dict) -> str:
+    lid = lead["lead_id"]
+    lines = [
+        f"🆕 <b>Новый лид #{lid}</b>",
+        "",
+        f"<b>Пользователь:</b> {lead['username']}",
+        f"<b>Источник:</b> {lead['source']}",
+        f"<b>Назначен тимлиду:</b> {lead['assigned_tl']}",
+        "",
+    ]
+
+    status = lead["status"]
+
+    if status == "NEW":
+        lines.append(f"<b>Статус:</b> NEW")
+        lines.append(f"🕒 <b>Создан:</b> {lead['created_at']}")
+    elif status == "IN_PROGRESS":
+        lines.append("🔵 <b>Статус:</b> В РАБОТЕ")
+        lines.append(f"👤 <b>Взял:</b> {lead['taken_by_username']}")
+        lines.append(f"🕒 <b>Взято:</b> {lead['taken_at']}")
+    else:
+        lines.append("🔚 <b>Статус:</b> ЗАВЕРШЁН")
+        result = "🟢 УСПЕХ" if status == "SUCCESS" else "🔴 НЕУСПЕХ"
+        lines.append(f"<b>Результат:</b> {result}")
+        lines.append(f"👤 <b>Обработал:</b> {lead['closed_by_username']}")
+        lines.append(f"🕒 <b>Завершено:</b> {lead['closed_at']}")
+
+    return "\n".join(lines)
+
+
+async def send_lead_card(bot, lead: dict):
+    text = _format_lead_text(lead)
+    msg = await bot.send_message(
         chat_id=LEADS_CHAT_ID,
         message_thread_id=LEADS_THREAD_ID,
-        text=(
-            f"🆕 <b>Новый лид #{lead_id}</b>\n\n"
-            f"<b>Пользователь:</b> {user}\n"
-            f"<b>Источник:</b> {source}\n"
-            f"<b>Назначен тимлиду:</b> {teamlead}\n"
-            f"<b>Статус:</b> NEW"
-        ),
-        reply_markup=kb,
-        parse_mode="HTML"
+        text=text,
+        reply_markup=_kb_take(lead["lead_id"])
     )
+    return msg
 
 
-@router.callback_query(lambda c: c.data.startswith("take_"))
+@router.callback_query(F.data.startswith("lead_take:"))
 async def take_lead(callback: CallbackQuery):
-    """
-    Тимлид жмёт «Взять в работу».
-    """
-    lead_id = callback.data.split("_", 1)[1]
+    lead_id = int(callback.data.split(":", 1)[1])
+    user = callback.from_user
+    staff_username = f"@{user.username}" if user.username else f"id:{user.id}"
 
-    set_lead_status(lead_id, "IN_PROGRESS")
-
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🟢 Успех", callback_data=f"done_{lead_id}")],
-        [InlineKeyboardButton(text="🔴 Неуспех", callback_data=f"fail_{lead_id}")],
-    ])
-
-    await callback.message.edit_text(
-        callback.message.text + "\n\n🔵 <b>Статус:</b> В РАБОТЕ",
-        parse_mode="HTML",
-        reply_markup=kb
+    lead = set_lead_taken(
+        lead_id=lead_id,
+        staff_id=user.id,
+        staff_username=staff_username,
     )
+    if not lead:
+        await callback.answer("Лид не найден", show_alert=True)
+        return
+
+    text = _format_lead_text(lead)
+    await callback.message.edit_text(text, reply_markup=_kb_close(lead_id))
     await callback.answer("Лид взят в работу")
 
 
-@router.callback_query(lambda c: c.data.startswith("done_") or c.data.startswith("fail_"))
-async def close_lead(callback: CallbackQuery):
-    """
-    Завершение лида: успех или неуспех.
-    """
-    lead_id = callback.data.split("_", 1)[1]
-    status = "SUCCESS" if callback.data.startswith("done_") else "FAILED"
+@router.callback_query(F.data.startswith("lead_success:"))
+async def success_lead(callback: CallbackQuery):
+    await _close_lead(callback, final_status="SUCCESS")
 
-    set_lead_status(lead_id, status)
 
-    result_text = "🟢 УСПЕХ" if status == "SUCCESS" else "🔴 НЕУСПЕХ"
+@router.callback_query(F.data.startswith("lead_fail:"))
+async def fail_lead(callback: CallbackQuery):
+    await _close_lead(callback, final_status="FAILED")
 
-    await callback.message.edit_text(
-        callback.message.text + f"\n\n<b>Результат:</b> {result_text}",
-        parse_mode="HTML"
+
+async def _close_lead(callback: CallbackQuery, final_status: str):
+    lead_id = int(callback.data.split(":", 1)[1])
+    user = callback.from_user
+    staff_username = f"@{user.username}" if user.username else f"id:{user.id}"
+
+    lead = set_lead_closed(
+        lead_id=lead_id,
+        staff_id=user.id,
+        staff_username=staff_username,
+        status=final_status,
     )
+    if not lead:
+        await callback.answer("Лид не найден", show_alert=True)
+        return
+
+    text = _format_lead_text(lead)
+    await callback.message.edit_text(text, reply_markup=None)
     await callback.answer("Лид закрыт")

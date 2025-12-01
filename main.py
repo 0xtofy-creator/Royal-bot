@@ -1,6 +1,7 @@
 # main.py
 
 import asyncio
+
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 
@@ -13,7 +14,10 @@ from handlers.id import router as id_router
 
 
 async def main() -> None:
-    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+    bot = Bot(
+        token=BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode="HTML")
+    )
     dp = Dispatcher()
 
     dp.include_router(start_router)

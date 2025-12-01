@@ -11,5 +11,7 @@ router = Router()
 async def cmd_id(message: Message):
     chat_id = message.chat.id
     user_id = message.from_user.id
-    text = f"chat_id = <code>{chat_id}</code>\nuser_id = <code>{user_id}</code>"
-    await message.answer(text, parse_mode="HTML")
+    await message.answer(
+        f"chat_id = <code>{chat_id}</code>\nuser_id = <code>{user_id}</code>",
+        parse_mode="HTML",
+    )

@@ -1,46 +1,44 @@
+# handlers/start.py
+
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 
 from keyboards.main_menu import main_menu
-from utils.logger import save_user_source
+from utils.texts import START_TEXT
+from utils.logger import log_user_start
+from config import AD_SOURCES_CHAT_ID, AD_SOURCES_THREAD_ID
 
 router = Router()
 
 
-@router.message(CommandStart(deep_link=True))
-async def start_with_source(message: Message, command: CommandStart):
-    """
-    Пользователь перешёл по deep-link: /start <source>
-    """
-    source = command.args or "organic"
-
-    await save_user_source(
-        user_id=message.from_user.id,
-        username=message.from_user.username,
-        source=source
-    )
-
-    await message.answer(
-        "👋 Привет! Это официальный бот Royal Finance.\n\n"
-        "Выбери нужный раздел ниже:",
-        reply_markup=main_menu()
-    )
-
-
 @router.message(CommandStart())
-async def start_clean(message: Message):
-    """
-    Пользователь ввёл /start без параметров
-    """
-    await save_user_source(
-        user_id=message.from_user.id,
-        username=message.from_user.username,
-        source="organic"
+async def cmd_start(message: Message):
+    user = message.from_user
+
+    # /start или /start source
+    parts = (message.text or "").split(maxsplit=1)
+    source = parts[1] if len(parts) > 1 else "organic"
+
+    log_user_start(
+        user_id=user.id,
+        username=user.username,
+        source=source,
     )
 
-    await message.answer(
-        "👋 Привет! Это официальный бот Royal Finance.\n\n"
-        "Выбери нужный раздел ниже:",
-        reply_markup=main_menu()
-    )
+    # Лог в тред рекламы
+    if source != "organic":
+        username_display = f"@{user.username}" if user.username else f"id:{user.id}"
+        text = (
+            "🆕 <b>Новый пользователь из рекламы</b>\n\n"
+            f"👤 Пользователь: {username_display}\n"
+            f"🆔 ID: <code>{user.id}</code>\n"
+            f"📲 Источник: <code>{source}</code>"
+        )
+        await message.bot.send_message(
+            chat_id=AD_SOURCES_CHAT_ID,
+            message_thread_id=AD_SOURCES_THREAD_ID,
+            text=text
+        )
+
+    await message.answer(START_TEXT, reply_markup=main_menu())
