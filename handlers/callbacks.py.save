@@ -1,0 +1,118 @@
+    if not lead:
+        await callback.answer("Не удалось отменить заявку.", show_alert=True)
+        return
+
+    # Сообщение в канал лидов
+    text = (
+        f"❌ <b>Лид #{lead_id} отменён пользователем</b>\n\n"
+        f"👤 Пользователь: {lead['username']}\n"
+        f"🆔 ID: <code>{lead['user_id']}</code>\n"
+        f"🕒 Отменён: {lead['closed_at']}"
+    )
+    await callback.bot.send_message(
+        chat_id=LEADS_CHAT_ID,
+        message_thread_id=LEADS_THREAD_ID,
+        text=text,
+    )
+
+    await callback.message.edit_text(
+        "❌ Ваша заявка отменена.\n\n"
+        "Вы можете создать новую, когда будете готовы, через кнопку «Подключиться на площадку».",
+        reply_markup=main_menu(),
+    )
+
+    await state.clear()
+    await callback.answer("Заявка отменена.")
+
+
+# ---------------------------------------------------------------------------
+# 2. Оффер
+# ---------------------------------------------------------------------------
+
+@router.callback_query(F.data == "offer")
+async def offer(callback: CallbackQuery):
+    await callback.message.edit_text(OFFER_TEXT, reply_markup=main_menu())
+    await callback.answer()
+
+
+# ---------------------------------------------------------------------------
+# 3. Мануалы
+# ---------------------------------------------------------------------------
+
+@router.callback_query(F.data == "manuals")
+async def manuals(callback: CallbackQuery):
+    await callback.message.edit_text(MANUALS_TEXT, reply_markup=main_menu())
+    await callback.answer()
+
+
+# ---------------------------------------------------------------------------
+# 4. Тимлиды
+# ---------------------------------------------------------------------------
+
+@router.callback_query(F.data == "teamleads")
+async def teamleads(callback: CallbackQuery):
+    await callback.message.edit_text(REPRESENTATIVES_TEXT, reply_markup=main_menu())
+    await callback.answer()
+
+
+# ---------------------------------------------------------------------------
+# 5. Каналы менторов
+# ---------------------------------------------------------------------------
+
+@router.callback_query(F.data == "mentors")
+async def mentors(callback: CallbackQuery):
+    await callback.message.edit_text(MENTORS_TEXT, reply_markup=main_menu())
+    await callback.answer()
+
+
+# ---------------------------------------------------------------------------
+# 6. Проблема в работе
+# ---------------------------------------------------------------------------
+
+@router.callback_query(F.data == "problem")
+async def problem(callback: CallbackQuery, state: FSMContext):
+    user = callback.from_user
+
+    # Сообщение пользователю
+    await callback.message.edit_text(
+        PROBLEM_TEXT,
+        reply_markup=main_menu(),
+    )
+
+    # Лог в тред проблем
+    await callback.bot.send_message(
+        chat_id=PROBLEM_CHAT_ID,
+        message_thread_id=PROBLEM_THREAD_ID,
+        text=(
+            "⚠️ <b>Проблема от пользователя</b>\n"
+            f"👤 {user.full_name}\n"
+            f"🆔 {user.id}\n"
+            f"🔗 @{user.username if user.username else '—'}\n\n"
+            "<i>Ожидаем сообщение…</i>"
+        ),
+    )
+
+    # FSM: ждём сообщение с описанием проблемы
+    await state.set_state(ProblemForm.waiting_for_message)
+
+    await callback.answer()
+
+
+@router.message(StateFilter(ProblemForm.waiting_for_message))
+async def problem_message(message: Message, state: FSMContext):
+    """
+    Ловим следующее сообщение пользователя и пересылаем его в чат проблем.
+    """
+    await message.bot.copy_message(
+        chat_id=PROBLEM_CHAT_ID,
+        from_chat_id=message.chat.id,
+        message_id=message.message_id,
+        message_thread_id=PROBLEM_THREAD_ID,
+    )
+
+    await message.answer(
+        "✅ Спасибо! Мы зафиксировали вашу проблему и передали её команде поддержки.",
+        reply_markup=main_menu(),
+    )
+
+    await state.clear()

@@ -6,6 +6,7 @@ __pycache__/
 .idea/
 .vscode/
 config.py
+data/*.json
 
 # Логи
 *.log
